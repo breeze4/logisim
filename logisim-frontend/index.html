@@ -4,10 +4,22 @@
     <meta charset="UTF-8" />
     <link rel="icon" type="image/svg+xml" href="/vite.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Vite + TS</title>
+    <title>Logistics Simulation</title>
+    <link rel="stylesheet" href="./src/style.css">
   </head>
   <body>
-    <div id="app"></div>
+    <div id="controls">
+      <h3>Logistics Simulation</h3>
+      <p>WASD: Pan | Q/E: Rotate | Shift+W/S: Tilt | Ctrl/Space: Zoom</p>
+      <div>
+        <label>Plane Width: <input type="number" id="planeWidth" value="100" min="10" max="500"></label>
+      </div>
+      <div>
+        <label>Plane Height: <input type="number" id="planeHeight" value="100" min="10" max="500"></label>
+      </div>
+      <button id="updatePlane">Update Plane</button>
+    </div>
+    <div id="canvas-container"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
 </html>
