@@ -4,6 +4,7 @@ class LogisticsSimulation {
     this.camera = null;
     this.renderer = null;
     this.plane = null;
+    this.entityManager = null;
     this.planeWidth = 100;
     this.planeHeight = 100;
     this.cameraFocusPoint = new THREE.Vector3(0, 0, 0);
@@ -39,6 +40,9 @@ class LogisticsSimulation {
     this.createPlane();
     this.setupLighting();
     this.updateCameraPosition();
+
+    this.entityManager = new EntityManager(this.scene);
+    this.entityManager.loadEntities('entities.json');
 
     window.addEventListener('resize', () => this.onWindowResize());
   }
