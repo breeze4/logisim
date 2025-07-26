@@ -37,32 +37,42 @@ export class Entity {
   }
 
   update(deltaTime: number) {
+    // Handle movement towards a target destination
     if (this.isMoving && this.targetPosition && this.mesh) {
-      const direction = this.targetPosition.clone().sub(this.mesh.position).normalize();
-      const speed = 5; // You can make this configurable
-      this.velocity = direction.multiplyScalar(speed);
+      const speed = 5; // This could be a configurable property
+      
+      const targetPositionOnPlane = this.targetPosition.clone();
+      targetPositionOnPlane.y = this.mesh.position.y;
 
-      const distanceToTarget = this.mesh.position.distanceTo(this.targetPosition);
-      if (distanceToTarget < 1) {
+      const distanceToTarget = this.mesh.position.distanceTo(targetPositionOnPlane);
+      const travelDistance = speed * deltaTime;
+
+      if (distanceToTarget <= travelDistance) {
+        // Arrived at the destination
+        this.mesh.position.copy(targetPositionOnPlane);
         this.isMoving = false;
         this.targetPosition = null;
         this.velocity.set(0, 0, 0);
+      } else {
+        // Move towards the destination
+        const direction = targetPositionOnPlane.clone().sub(this.mesh.position).normalize();
+        this.velocity = direction.multiplyScalar(speed);
+        const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
+        this.mesh.position.add(deltaPosition);
       }
-    } else {
-        // Apply acceleration only when not moving to a target
-        this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+    }
+    // Handle physics-based movement (e.g., from acceleration)
+    else if (this.mesh) {
+      this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+      const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
+      this.mesh.position.add(deltaPosition);
     }
 
-    // Update position
-    const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
-    this.position.x += deltaPosition.x;
-    this.position.y += deltaPosition.z; // Map Z from 3D space to Y in 2D plane
-
+    // Update internal state and orientation for all cases
     if (this.mesh) {
-      this.mesh.position.x += deltaPosition.x;
-      this.mesh.position.z += deltaPosition.z;
+      this.position.x = this.mesh.position.x;
+      this.position.y = this.mesh.position.z;
 
-      // Orient the entity to face its direction of movement
       if (this.velocity.lengthSq() > 0.001) {
         const lookAtTarget = this.mesh.position.clone().add(this.velocity);
         this.mesh.lookAt(lookAtTarget);

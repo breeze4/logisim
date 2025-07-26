@@ -73,9 +73,9 @@ This document tracks the implementation tasks for the Logistics Simulation proje
   - Allow the user to cancel a movement command with a right-click or the `Escape` key.
 
 ### UI and Advanced Features
-- [ ] **Task 12: Create Movement Feedback UI**
+- [x] **Task 12: Create Movement Feedback UI**
   - Provide clear UI feedback indicating which entity is selected for movement.
-- [ ] **Task 13: Refactor InteractionManager for Moving Entities**
+- [x] **Task 13: Refactor InteractionManager for Moving Entities**
   - Ensure the `InteractionManager` correctly handles interactions with entities that are in motion.
-- [ ] **Task 14: Implement Movement Queue System**
+- [x] **Task 14: Implement Movement Queue System**
   - Allow multiple entities to have movement commands queued and executed simultaneously.

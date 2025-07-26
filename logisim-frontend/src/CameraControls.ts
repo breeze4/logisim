@@ -24,6 +24,13 @@ export class CameraControls {
       this.keys[event.code] = false;
       this.keys['Shift'] = event.shiftKey;
     });
+
+    document.addEventListener('wheel', (event) => {
+      const zoomSpeed = 0.1;
+      this.cameraDistance += event.deltaY * zoomSpeed;
+      this.cameraDistance = Math.max(10, Math.min(200, this.cameraDistance));
+      this.updateCameraPosition();
+    });
   }
 
   updateCameraPosition() {
@@ -42,7 +49,6 @@ export class CameraControls {
   handleKeyInput() {
     const panSpeed = 0.75;
     const rotationSpeed = 0.01;
-    const zoomSpeed = 2;
     const tiltSpeed = 0.005;
 
     const forward = new THREE.Vector3(
@@ -82,13 +88,6 @@ export class CameraControls {
     }
     if (this.keys['KeyE']) {
       this.cameraRotation -= rotationSpeed;
-    }
-
-    if (this.keys['ControlLeft'] || this.keys['ControlRight']) {
-      this.cameraDistance = Math.max(10, this.cameraDistance - zoomSpeed);
-    }
-    if (this.keys['Space']) {
-      this.cameraDistance = Math.min(200, this.cameraDistance + zoomSpeed);
     }
 
     this.updateCameraPosition();

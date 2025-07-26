@@ -7,6 +7,7 @@ export class UIManager {
   private entityTypeSelect: HTMLSelectElement;
   private addEntityButton: HTMLButtonElement;
   private clearEntitiesButton: HTMLButtonElement;
+  private statusDisplay: HTMLElement;
 
   constructor(
     private onAddEntity: (type: 'box' | 'cylinder' | 'sphere') => void,
@@ -18,9 +19,20 @@ export class UIManager {
     this.entityTypeSelect = document.getElementById('entity-type') as HTMLSelectElement;
     this.addEntityButton = document.getElementById('add-entity') as HTMLButtonElement;
     this.clearEntitiesButton = document.getElementById('clear-entities') as HTMLButtonElement;
+    this.statusDisplay = document.getElementById('status-display')!;
 
     this.addEntityButton.addEventListener('click', () => this.onAddEntity(this.entityTypeSelect.value as any));
     this.clearEntitiesButton.addEventListener('click', () => this.onClearEntities());
+  }
+
+  updateStatus(state: 'IDLE' | 'ENTITY_SELECTED') {
+    if (state === 'IDLE') {
+      this.statusDisplay.textContent = 'Select an entity to begin.';
+      this.statusDisplay.className = 'status-idle';
+    } else {
+      this.statusDisplay.textContent = 'Entity selected. Click a destination on the plane to start movement.';
+      this.statusDisplay.className = 'status-selected';
+    }
   }
 
   updateMovementVectors(entity: Entity) {

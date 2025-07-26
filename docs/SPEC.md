@@ -19,7 +19,7 @@ This document outlines the specifications for a 3D logistics simulation applicat
 - **Panning:** Use **WASD** keys for camera movement, relative to the camera's current orientation.
 - **Rotation:** Use **Q** and **E** keys to rotate the camera in a wide circle around its focal point.
 - **Tilting:** Use **Shift-W** and **Shift-S** to tilt the camera angle up and down.
-- **Zoom:** Use **Ctrl** and **Space** keys to zoom in and out, respectively (within a 10-200 unit range).
+- **Zoom:** Use the **mousewheel** to zoom in and out (within a 10-200 unit range).
 
 ### 3.3. Technical Implementation
 - The system is implemented using a `Three.js PerspectiveCamera`.

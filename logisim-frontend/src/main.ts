@@ -180,6 +180,7 @@ class LogisticsSimulation {
     
     this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
     this.uiManager.updateSelectedEntityPanel(this.selectedEntity);
+    this.uiManager.updateStatus(this.movementState);
   }
 
   onPlaneMouseMove(event: MouseEvent) {
@@ -231,6 +232,12 @@ class LogisticsSimulation {
       }
 
       this.previewLine.visible = false;
+
+      // Clean up old visuals if they exist
+      if (this.selectedEntity.movementVisuals) {
+        this.scene.remove(this.selectedEntity.movementVisuals.marker);
+        this.scene.remove(this.selectedEntity.movementVisuals.line);
+      }
 
       const marker = new THREE.Mesh(
         new THREE.SphereGeometry(0.5, 16, 16),
