@@ -47,15 +47,15 @@ This document tracks the implementation tasks for the Logistics Simulation proje
 ## Upcoming Tasks: Entity Movement
 
 ### Core Mechanics
-- [ ] **Task 1: Update Entity Class for Movement**
+- [x] **Task 1: Update Entity Class for Movement**
   - Modify the `Entity` class to include `velocity` (THREE.Vector3) and `acceleration` (THREE.Vector3) properties.
-- [ ] **Task 2: Implement Time-based Movement**
+- [x] **Task 2: Implement Time-based Movement**
   - Add an `update(deltaTime: number)` method to the `Entity` class to handle physics-based position updates.
-- [ ] **Task 3: Integrate Entity Updates into Main Loop**
+- [x] **Task 3: Integrate Entity Updates into Main Loop**
   - Call the `update(deltaTime)` method for all moving entities in the main animation loop.
-- [ ] **Task 4: Implement Orientation Alignment**
+- [x] **Task 4: Implement Orientation Alignment**
   - Orient the entity's mesh to face its direction of movement within the `update` method.
-- [ ] **Task 5: Basic Entity Spawning with Movement**
+- [x] **Task 5: Basic Entity Spawning with Movement**
   - Add a mechanism to spawn entities with initial velocity and acceleration.
 
 ### Interactive Movement Control

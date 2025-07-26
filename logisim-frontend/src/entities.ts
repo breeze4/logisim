@@ -16,6 +16,8 @@ export class Entity {
   size: { width?: number; height?: number; depth?: number; radius?: number };
   color: string;
   mesh: THREE.Mesh | null;
+  velocity: THREE.Vector3;
+  acceleration: THREE.Vector3;
 
   constructor(entityData: EntityData) {
     this.id = entityData.id;
@@ -24,6 +26,29 @@ export class Entity {
     this.size = entityData.size;
     this.color = entityData.color;
     this.mesh = null;
+    this.velocity = new THREE.Vector3();
+    this.acceleration = new THREE.Vector3();
+  }
+
+  update(deltaTime: number) {
+    // Update velocity
+    this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+
+    // Update position
+    const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
+    this.position.x += deltaPosition.x;
+    this.position.y += deltaPosition.z; // Map Z from 3D space to Y in 2D plane
+
+    if (this.mesh) {
+      this.mesh.position.x += deltaPosition.x;
+      this.mesh.position.z += deltaPosition.z;
+
+      // Orient the entity to face its direction of movement
+      if (this.velocity.lengthSq() > 0.001) {
+        const lookAtTarget = this.mesh.position.clone().add(this.velocity);
+        this.mesh.lookAt(lookAtTarget);
+      }
+    }
   }
 }
 
@@ -95,7 +120,14 @@ export class EntityManager {
       size: type === 'box' ? { width: 4, height: 4, depth: 4 } : { radius: 2, height: 6 },
       color: `#${Math.floor(Math.random()*16777215).toString(16)}`
     };
-    return this.createEntity(entityData);
+    const entity = this.createEntity(entityData);
+
+    // Give the entity an initial velocity for testing
+    if (entity) {
+      entity.velocity.set(Math.random() * 10 - 5, 0, Math.random() * 10 - 5);
+    }
+    
+    return entity;
   }
 
   deleteEntity(entity: Entity) {

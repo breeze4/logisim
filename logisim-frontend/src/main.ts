@@ -17,6 +17,7 @@ class LogisticsSimulation {
   planeWidth: number = 100;
   planeHeight: number = 100;
   selectedEntity: Entity | null = null;
+  clock: THREE.Clock;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -27,6 +28,7 @@ class LogisticsSimulation {
       1000
     );
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
+    this.clock = new THREE.Clock();
     
     this.interactionManager = new AppInteractionManager(
       this.renderer,
@@ -105,6 +107,16 @@ class LogisticsSimulation {
     directionalLight.castShadow = true;
     directionalLight.shadow.mapSize.width = 2048;
     directionalLight.shadow.mapSize.height = 2048;
+
+    // Adjust the shadow camera frustum
+    const shadowCameraSize = Math.max(this.planeWidth, this.planeHeight);
+    directionalLight.shadow.camera.near = 0.5;
+    directionalLight.shadow.camera.far = 500;
+    directionalLight.shadow.camera.left = -shadowCameraSize / 2;
+    directionalLight.shadow.camera.right = shadowCameraSize / 2;
+    directionalLight.shadow.camera.top = shadowCameraSize / 2;
+    directionalLight.shadow.camera.bottom = -shadowCameraSize / 2;
+
     this.scene.add(directionalLight);
   }
 
@@ -116,16 +128,6 @@ class LogisticsSimulation {
         this.planeHeight = parseInt((<HTMLInputElement>document.getElementById('planeHeight')).value);
         this.createPlane();
       });
-    }
-    window.addEventListener('keydown', this.onKeyDown.bind(this));
-  }
-
-  onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (this.selectedEntity) {
-        this.entityManager.deleteEntity(this.selectedEntity);
-        this.selectEntity(null);
-      }
     }
   }
 
@@ -155,6 +157,16 @@ class LogisticsSimulation {
 
   animate() {
     requestAnimationFrame(() => this.animate());
+    const deltaTime = this.clock.getDelta();
+
+    this.entityManager.entities.forEach(entity => {
+      entity.update(deltaTime);
+    });
+
+    if (this.selectedEntity) {
+      this.uiManager.updateMovementVectors(this.selectedEntity);
+    }
+
     this.cameraControls.update();
     this.interactionManager.update();
     this.renderer.render(this.scene, this.camera);
