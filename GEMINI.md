@@ -52,4 +52,6 @@ When completing a checklist of tasks, make sure to check off each item as its co
 
 When turning a spec into tasks, make sure that the tasks are logical units of creation. For example, to turn a basic API call from the spec into tasks, try something like: task to scaffold the API client and make sure it works correctly, then add resuable constants/functions as needed, then make the new API call, then add the usage of the API to the app. Be very granular and specific with tasks.
 
+When working on tasks and spec, look for existing functionality and features that are related, and ensure that the new tasks/spec are compatible and integrated completely with the existing functionality. If there is a conflict, bring that to my attention and ask me how I'd like to resolve it.
+
 After completing a series of tasks, be sure to run `npm run build` to look for error messages in the build.
