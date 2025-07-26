@@ -18,6 +18,9 @@ export class Entity {
   mesh: THREE.Mesh | null;
   velocity: THREE.Vector3;
   acceleration: THREE.Vector3;
+  isMoving: boolean;
+  targetPosition: THREE.Vector3 | null;
+  movementVisuals: { marker: THREE.Mesh, line: THREE.Line } | null;
 
   constructor(entityData: EntityData) {
     this.id = entityData.id;
@@ -28,11 +31,27 @@ export class Entity {
     this.mesh = null;
     this.velocity = new THREE.Vector3();
     this.acceleration = new THREE.Vector3();
+    this.isMoving = false;
+    this.targetPosition = null;
+    this.movementVisuals = null;
   }
 
   update(deltaTime: number) {
-    // Update velocity
-    this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+    if (this.isMoving && this.targetPosition && this.mesh) {
+      const direction = this.targetPosition.clone().sub(this.mesh.position).normalize();
+      const speed = 5; // You can make this configurable
+      this.velocity = direction.multiplyScalar(speed);
+
+      const distanceToTarget = this.mesh.position.distanceTo(this.targetPosition);
+      if (distanceToTarget < 1) {
+        this.isMoving = false;
+        this.targetPosition = null;
+        this.velocity.set(0, 0, 0);
+      }
+    } else {
+        // Apply acceleration only when not moving to a target
+        this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
+    }
 
     // Update position
     const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
@@ -120,14 +139,7 @@ export class EntityManager {
       size: type === 'box' ? { width: 4, height: 4, depth: 4 } : { radius: 2, height: 6 },
       color: `#${Math.floor(Math.random()*16777215).toString(16)}`
     };
-    const entity = this.createEntity(entityData);
-
-    // Give the entity an initial velocity for testing
-    if (entity) {
-      entity.velocity.set(Math.random() * 10 - 5, 0, Math.random() * 10 - 5);
-    }
-    
-    return entity;
+    return this.createEntity(entityData);
   }
 
   deleteEntity(entity: Entity) {

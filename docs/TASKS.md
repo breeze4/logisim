@@ -59,17 +59,17 @@ This document tracks the implementation tasks for the Logistics Simulation proje
   - Add a mechanism to spawn entities with initial velocity and acceleration.
 
 ### Interactive Movement Control
-- [ ] **Task 6: Implement Three-Click Movement System**
+- [x] **Task 6: Implement Three-Click Movement System**
   - Develop the state machine for selecting an entity, a target, and confirming movement.
-- [ ] **Task 7: Add Movement State Tracking**
+- [x] **Task 7: Add Movement State Tracking**
   - Add properties like `isMoving` and `targetPosition` to the `Entity` class.
-- [ ] **Task 8: Create Visual Movement Preview**
+- [x] **Task 8: Create Visual Movement Preview**
   - Render a line or marker from the selected entity to the potential target position.
-- [ ] **Task 9: Implement Smooth Movement Animation**
+- [x] **Task 9: Implement Smooth Movement Animation**
   - Use interpolation to animate the entity smoothly from its current position to the target.
-- [ ] **Task 10: Add Movement Validation**
+- [x] **Task 10: Add Movement Validation**
   - Ensure the selected target position is within the valid boundaries of the world plane.
-- [ ] **Task 11: Implement Movement Cancellation**
+- [x] **Task 11: Implement Movement Cancellation**
   - Allow the user to cancel a movement command with a right-click or the `Escape` key.
 
 ### UI and Advanced Features

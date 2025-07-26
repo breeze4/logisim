@@ -12,16 +12,6 @@ export class AppInteractionManager {
     private onSelectEntity: (entity: Entity | null) => void
   ) {
     this.interactionManager = new InteractionManager(renderer, camera, renderer.domElement);
-    window.addEventListener('keydown', this.onKeyDown.bind(this));
-  }
-
-  private onKeyDown(event: KeyboardEvent) {
-    if (event.key === 'Delete' || event.key === 'Backspace') {
-      if (this.selectedEntity) {
-        // This should be handled by the EntityManager
-        console.log('Delete key pressed for entity:', this.selectedEntity.id);
-      }
-    }
   }
 
   add(entity: Entity) {
@@ -31,7 +21,10 @@ export class AppInteractionManager {
     // @ts-expect-error: 'click' is not in Object3DEventMap, but is supported by three.interactive
     entity.mesh.addEventListener('click', (event: InteractiveEvent) => {
       event.stopPropagation();
-      this.selectEntity(entity);
+      if (event.originalEvent) {
+        event.originalEvent.stopPropagation();
+      }
+      this.onSelectEntity(entity);
     });
   }
 
@@ -41,7 +34,7 @@ export class AppInteractionManager {
     }
   }
 
-  selectEntity(entity: Entity | null) {
+  setHighlight(entity: Entity | null) {
     if (this.selectedEntity && this.selectedEntity.mesh) {
       // Deselect previous
       (this.selectedEntity.mesh.material as THREE.MeshLambertMaterial).emissive.setHex(0x000000);
@@ -53,8 +46,6 @@ export class AppInteractionManager {
       // Select new
       (this.selectedEntity.mesh.material as THREE.MeshLambertMaterial).emissive.setHex(0x555555);
     }
-
-    this.onSelectEntity(this.selectedEntity);
   }
 
   update() {

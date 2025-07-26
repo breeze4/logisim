@@ -5,6 +5,8 @@ import { CameraControls } from './CameraControls';
 import { UIManager } from './UIManager';
 import { AppInteractionManager } from './InteractionManager';
 
+type MovementState = 'IDLE' | 'ENTITY_SELECTED';
+
 class LogisticsSimulation {
   scene: THREE.Scene;
   camera: THREE.PerspectiveCamera;
@@ -18,6 +20,9 @@ class LogisticsSimulation {
   planeHeight: number = 100;
   selectedEntity: Entity | null = null;
   clock: THREE.Clock;
+  movementState: MovementState = 'IDLE';
+  previewLine: THREE.Line;
+  private entityInteraction: boolean = false;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -42,6 +47,13 @@ class LogisticsSimulation {
       this.clearEntities.bind(this),
       this.selectEntity.bind(this)
     );
+
+    // Movement visualization
+    const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+    const lineGeometry = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3()]);
+    this.previewLine = new THREE.Line(lineGeometry, lineMaterial);
+    this.previewLine.visible = false;
+    this.scene.add(this.previewLine);
 
     this.init();
     this.setupControls();
@@ -70,6 +82,8 @@ class LogisticsSimulation {
     });
 
     window.addEventListener('resize', () => this.onWindowResize());
+    this.renderer.domElement.addEventListener('click', this.onPlaneClick.bind(this));
+    this.renderer.domElement.addEventListener('mousemove', this.onPlaneMouseMove.bind(this));
   }
 
   createPlane() {
@@ -129,11 +143,19 @@ class LogisticsSimulation {
         this.createPlane();
       });
     }
+    window.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        this.selectEntity(null);
+      }
+    });
   }
 
   addEntity(type: 'box' | 'cylinder' | 'sphere') {
     // For now, add at center
-    this.entityManager.addEntity(type, { x: 0, y: 0 });
+    const entity = this.entityManager.addEntity(type, { x: 0, y: 0 });
+    if (entity) {
+        entity.velocity.set(0,0,0); // Start with no velocity
+    }
     this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
   }
 
@@ -143,10 +165,92 @@ class LogisticsSimulation {
   }
 
   selectEntity(entity: Entity | null) {
+    this.entityInteraction = true;
+
     this.selectedEntity = entity;
-    // this.interactionManager.selectEntity(entity);
+    this.interactionManager.setHighlight(entity);
+
+    if (entity) {
+      this.movementState = 'ENTITY_SELECTED';
+      console.log('Entity selected, waiting for target.');
+    } else {
+      this.movementState = 'IDLE';
+      this.previewLine.visible = false;
+    }
+    
     this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
     this.uiManager.updateSelectedEntityPanel(this.selectedEntity);
+  }
+
+  onPlaneMouseMove(event: MouseEvent) {
+    if (this.movementState !== 'ENTITY_SELECTED' || !this.selectedEntity || !this.selectedEntity.mesh) {
+      return;
+    }
+  
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+  
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, this.camera);
+    const intersects = raycaster.intersectObject(this.plane!);
+  
+    if (intersects.length > 0) {
+      const targetPoint = intersects[0].point;
+      const points = [this.selectedEntity.mesh.position, targetPoint];
+      this.previewLine.geometry.setFromPoints(points);
+      this.previewLine.visible = true;
+    }
+  }
+
+  onPlaneClick(event: MouseEvent) {
+    if (this.entityInteraction) {
+      this.entityInteraction = false;
+      return;
+    }
+    if (this.movementState !== 'ENTITY_SELECTED' || !this.selectedEntity) return;
+
+    const rect = this.renderer.domElement.getBoundingClientRect();
+    const mouse = new THREE.Vector2(
+      ((event.clientX - rect.left) / rect.width) * 2 - 1,
+      -((event.clientY - rect.top) / rect.height) * 2 + 1
+    );
+
+    const raycaster = new THREE.Raycaster();
+    raycaster.setFromCamera(mouse, this.camera);
+    const intersects = raycaster.intersectObject(this.plane!);
+
+    if (intersects.length > 0) {
+      const targetPoint = intersects[0].point;
+      
+      if (Math.abs(targetPoint.x) > this.planeWidth / 2 || Math.abs(targetPoint.z) > this.planeHeight / 2) {
+        console.warn('Target is outside the plane boundaries.');
+        return;
+      }
+
+      this.previewLine.visible = false;
+
+      const marker = new THREE.Mesh(
+        new THREE.SphereGeometry(0.5, 16, 16),
+        new THREE.MeshBasicMaterial({ color: 0xff0000 })
+      );
+      marker.position.copy(targetPoint);
+      this.scene.add(marker);
+
+      const lineMaterial = new THREE.LineBasicMaterial({ color: 0x0000ff });
+      const lineGeometry = new THREE.BufferGeometry().setFromPoints([this.selectedEntity.mesh!.position, targetPoint]);
+      const line = new THREE.Line(lineGeometry, lineMaterial);
+      this.scene.add(line);
+
+      this.selectedEntity.movementVisuals = { marker, line };
+      this.selectedEntity.targetPosition = targetPoint;
+      this.selectedEntity.isMoving = true;
+      
+      console.log('Movement started.');
+      this.selectEntity(null);
+    }
   }
 
   onWindowResize() {
@@ -161,6 +265,16 @@ class LogisticsSimulation {
 
     this.entityManager.entities.forEach(entity => {
       entity.update(deltaTime);
+
+      if (entity.isMoving && entity.movementVisuals && entity.mesh && entity.targetPosition) {
+        const points = [entity.mesh.position, entity.targetPosition];
+        entity.movementVisuals.line.geometry.setFromPoints(points);
+      } else if (!entity.isMoving && entity.movementVisuals) {
+        this.scene.remove(entity.movementVisuals.marker);
+        this.scene.remove(entity.movementVisuals.line);
+        // Consider disposing geometry and material here
+        entity.movementVisuals = null;
+      }
     });
 
     if (this.selectedEntity) {
