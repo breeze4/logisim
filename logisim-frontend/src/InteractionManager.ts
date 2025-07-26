@@ -28,6 +28,7 @@ export class AppInteractionManager {
     if (!entity.mesh) return;
 
     this.interactionManager.add(entity.mesh);
+    // @ts-expect-error: 'click' is not in Object3DEventMap, but is supported by three.interactive
     entity.mesh.addEventListener('click', (event: InteractiveEvent) => {
       event.stopPropagation();
       this.selectEntity(entity);

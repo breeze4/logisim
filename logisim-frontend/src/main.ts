@@ -142,7 +142,7 @@ class LogisticsSimulation {
 
   selectEntity(entity: Entity | null) {
     this.selectedEntity = entity;
-    this.interactionManager.selectEntity(entity);
+    // this.interactionManager.selectEntity(entity);
     this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
     this.uiManager.updateSelectedEntityPanel(this.selectedEntity);
   }

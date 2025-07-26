@@ -12,6 +12,10 @@
     "moduleDetection": "force",
     "noEmit": false,
 
+    /* Output configuration */
+    "outDir": "./dist-tsc",
+    "rootDir": "./src",
+
     /* Linting */
     "strict": true,
     "noUnusedLocals": true,
