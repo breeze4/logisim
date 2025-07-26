@@ -44,8 +44,6 @@ This document tracks the implementation tasks for the Logistics Simulation proje
 - [x] Update `logisim-frontend/src/main.ts` to import the new CSS file.
 - [x] Remove the old `public` directory.
 
-## Upcoming Tasks: Entity Movement
-
 ### Core Mechanics
 - [x] **Task 1: Update Entity Class for Movement**
   - Modify the `Entity` class to include `velocity` (THREE.Vector3) and `acceleration` (THREE.Vector3) properties.
@@ -79,3 +77,5 @@ This document tracks the implementation tasks for the Logistics Simulation proje
   - Ensure the `InteractionManager` correctly handles interactions with entities that are in motion.
 - [x] **Task 14: Implement Movement Queue System**
   - Allow multiple entities to have movement commands queued and executed simultaneously.
+
+## Upcoming Tasks: 

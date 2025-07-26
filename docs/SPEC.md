@@ -51,7 +51,7 @@ This document outlines the specifications for a 3D logistics simulation applicat
 - **Creation:** Users can click on the plane to place new entities. This is handled via mouse raycasting.
 - **Selection:** Entities can be selected, which provides visual feedback (e.g., highlighting or an outline).
 - **Modification:** Selected entities' properties (like position, color, type) can be edited through a UI panel.
-- **Deletion:** Entities can be deleted by selecting them and pressing the 'Delete' key or using a UI button.
+- **Deletion:** Entities can be deleted using a UI button.
 - **Persistence:** Entity state is not persistent and resets on page reload.
 
 ### 4.3. Moving Entities
@@ -64,17 +64,14 @@ This document outlines the specifications for a 3D logistics simulation applicat
 
 #### 4.3.2. Movement Mechanics
 - **Time-based Updates**: Entity movement is based on a discrete time step (`deltaTime`) to ensure consistent speed across different frame rates.
-  - `new_velocity = current_velocity + acceleration * deltaTime`
-  - `new_position = current_position + velocity * deltaTime`
-- **Movement Control**: The simulation will use a three-click system for directing entities:
+- **Movement Control**: The simulation uses a two-click system for directing entities:
   1. **Click 1**: Select the entity to move.
-  2. **Click 2**: Select the target destination on the plane.
-  3. **Click 3**: Confirm the movement, initiating the animation.
-- **Visual Feedback**: The system will provide visual aids, such as a preview line to the target, a marker at the destination, and highlighting for the selected entity.
-- **Animation**: Movement between the start and target positions will be a smooth, interpolated animation.
+  2. **Click 2**: Select the target destination on the plane to initiate movement.
+- **Visual Feedback**: The system provides visual aids, such as a preview line to the target, a marker at the destination, and highlighting for the selected entity.
+- **Animation**: Movement between the start and target positions is a smooth, interpolated animation.
 - **Validation**: The target position must be within the boundaries of the world plane.
-- **Cancellation**: The movement command can be canceled by right-clicking or pressing the `Escape` key.
-- **Movement Queue**: The system should support queueing movement commands for multiple entities.
+- **Cancellation**: The movement command can be canceled by pressing the `Escape` key.
+- **Simultaneous Movement**: The system supports moving multiple entities at the same time.
 
 ## 5. User Interface
 - A dedicated, collapsible UI panel will house entity management controls.
