@@ -78,4 +78,28 @@ This document tracks the implementation tasks for the Logistics Simulation proje
 - [x] **Task 14: Implement Movement Queue System**
   - Allow multiple entities to have movement commands queued and executed simultaneously.
 
-## Upcoming Tasks: 
+## Upcoming Tasks: Collision Mechanics
+
+- [ ] **Task 1: Update Entity Class**
+  - Add a `mass` property (defaulting to 1).
+  - Add a `boundingVolume` property (to hold a `THREE.Box3` or `THREE.Sphere`).
+- [ ] **Task 2: Generate Bounding Volumes**
+  - In `EntityManager`, when creating an entity, compute its bounding volume and assign it.
+  - Ensure the bounding volume is updated whenever an entity moves.
+- [ ] **Task 3: Create CollisionManager Class**
+  - Create a new `CollisionManager.ts` file.
+  - The class will hold the logic for collision detection and response.
+- [ ] **Task 4: Implement Collision Detection**
+  - In `CollisionManager`, create a method to check for intersections between all entity bounding volumes.
+  - It should handle Box-Box, Sphere-Sphere, and Box-Sphere collision checks.
+- [ ] **Task 5: Implement Collision Response**
+  - In `CollisionManager`, create a method that takes two colliding entities and calculates their new velocities based on an elastic collision formula.
+- [ ] **Task 6: Refactor the Main Loop (`main.ts`)**
+  - Instantiate the `CollisionManager`.
+  - Change the `animate` loop order:
+    1. Calculate intended velocity for each entity.
+    2. Run collision detection and response, which may alter velocities.
+    3. Update entity positions based on the final, adjusted velocities.
+- [ ] **Task 7: Refactor Entity `update` Method**
+  - Separate the concerns of "intent" (moving towards a target) and "execution" (updating position based on final velocity).
+  - The collision response will modify the final velocity, but the entity's intent to reach its target should remain. 

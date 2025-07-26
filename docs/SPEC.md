@@ -81,3 +81,20 @@ This document outlines the specifications for a 3D logistics simulation applicat
   - A list displaying all current entities with their names or IDs.
   - Buttons for deleting entities and clearing all entities from the scene.
 - Constants for velocity and acceleration should be editable in a controls section of the UI.
+
+## 6. Collision Mechanics
+
+### 6.1. Core Requirement
+- Entities must not be able to pass through one another. They should realistically collide and react.
+
+### 6.2. Detection Method
+- **Bounding Volumes:** Collision detection will be based on simplified geometric shapes that surround each entity.
+  - **`box` type:** An Axis-Aligned Bounding Box (AABB).
+  - **`sphere`, `cylinder` types:** A Bounding Sphere.
+- **Checks:** The system will perform intersection tests between these bounding volumes on each frame.
+
+### 6.3. Response Method
+- **Physics-Based Reaction:** Collisions will be treated as elastic, meaning entities will "bounce" off each other.
+- **Mass Property:** A `mass` property will be added to each entity to influence the collision outcome. By default, all entities will have a mass of 1.
+- **Static vs. Dynamic:** If a moving entity collides with a static entity (one with zero velocity), the moving entity will bounce off, and the static entity will remain unaffected (as if it has infinite mass).
+- **Calculation:** The post-collision velocities will be calculated based on the conservation of momentum and kinetic energy.
