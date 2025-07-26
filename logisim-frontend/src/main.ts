@@ -4,6 +4,7 @@ import { EntityManager, Entity } from './entities';
 import { CameraControls } from './CameraControls';
 import { UIManager } from './UIManager';
 import { AppInteractionManager } from './InteractionManager';
+import { CollisionManager } from './CollisionManager';
 
 type MovementState = 'IDLE' | 'ENTITY_SELECTED';
 
@@ -16,6 +17,7 @@ class LogisticsSimulation {
   cameraControls: CameraControls;
   uiManager: UIManager;
   interactionManager: AppInteractionManager;
+  collisionManager: CollisionManager;
   planeWidth: number = 100;
   planeHeight: number = 100;
   selectedEntity: Entity | null = null;
@@ -41,6 +43,7 @@ class LogisticsSimulation {
       this.selectEntity.bind(this)
     );
     this.entityManager = new EntityManager(this.scene, this.interactionManager);
+    this.collisionManager = new CollisionManager(this.entityManager.entities);
     this.cameraControls = new CameraControls(this.camera);
     this.uiManager = new UIManager(
       this.addEntity.bind(this),
@@ -270,8 +273,24 @@ class LogisticsSimulation {
     requestAnimationFrame(() => this.animate());
     const deltaTime = this.clock.getDelta();
 
+    // 1. Update entity intent and apply physics
     this.entityManager.entities.forEach(entity => {
       entity.update(deltaTime);
+    });
+
+    // 2. Check for and resolve collisions
+    this.collisionManager.checkCollisions();
+
+    // 3. Update positions and visuals
+    this.entityManager.entities.forEach(entity => {
+      if (entity.mesh) {
+        entity.mesh.position.add(entity.velocity.clone().multiplyScalar(deltaTime));
+        if (entity.boundingVolume instanceof THREE.Sphere) {
+          entity.boundingVolume.center.copy(entity.mesh.position);
+        } else if (entity.boundingVolume instanceof THREE.Box3) {
+          entity.boundingVolume.setFromObject(entity.mesh);
+        }
+      }
 
       if (entity.isMoving && entity.movementVisuals && entity.mesh && entity.targetPosition) {
         const points = [entity.mesh.position, entity.targetPosition];
@@ -279,7 +298,6 @@ class LogisticsSimulation {
       } else if (!entity.isMoving && entity.movementVisuals) {
         this.scene.remove(entity.movementVisuals.marker);
         this.scene.remove(entity.movementVisuals.line);
-        // Consider disposing geometry and material here
         entity.movementVisuals = null;
       }
     });

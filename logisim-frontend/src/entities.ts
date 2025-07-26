@@ -21,6 +21,8 @@ export class Entity {
   isMoving: boolean;
   targetPosition: THREE.Vector3 | null;
   movementVisuals: { marker: THREE.Mesh, line: THREE.Line } | null;
+  mass: number;
+  boundingVolume: THREE.Box3 | THREE.Sphere | null;
 
   constructor(entityData: EntityData) {
     this.id = entityData.id;
@@ -34,41 +36,34 @@ export class Entity {
     this.isMoving = false;
     this.targetPosition = null;
     this.movementVisuals = null;
+    this.mass = 1;
+    this.boundingVolume = null;
   }
 
   update(deltaTime: number) {
-    // Handle movement towards a target destination
+    // 1. Determine intended velocity
     if (this.isMoving && this.targetPosition && this.mesh) {
-      const speed = 5; // This could be a configurable property
-      
+      const speed = 5;
       const targetPositionOnPlane = this.targetPosition.clone();
       targetPositionOnPlane.y = this.mesh.position.y;
-
+      
       const distanceToTarget = this.mesh.position.distanceTo(targetPositionOnPlane);
       const travelDistance = speed * deltaTime;
 
       if (distanceToTarget <= travelDistance) {
-        // Arrived at the destination
         this.mesh.position.copy(targetPositionOnPlane);
         this.isMoving = false;
         this.targetPosition = null;
         this.velocity.set(0, 0, 0);
       } else {
-        // Move towards the destination
         const direction = targetPositionOnPlane.clone().sub(this.mesh.position).normalize();
         this.velocity = direction.multiplyScalar(speed);
-        const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
-        this.mesh.position.add(deltaPosition);
       }
-    }
-    // Handle physics-based movement (e.g., from acceleration)
-    else if (this.mesh) {
+    } else {
       this.velocity.add(this.acceleration.clone().multiplyScalar(deltaTime));
-      const deltaPosition = this.velocity.clone().multiplyScalar(deltaTime);
-      this.mesh.position.add(deltaPosition);
     }
 
-    // Update internal state and orientation for all cases
+    // 2. Update internal state and orientation (based on final velocity, which may be changed by collision)
     if (this.mesh) {
       this.position.x = this.mesh.position.x;
       this.position.y = this.mesh.position.z;
@@ -134,6 +129,15 @@ export class EntityManager {
     mesh.userData.entity = entity;
 
     entity.mesh = mesh;
+
+    // Create and assign bounding volume
+    if (entity.type === 'box') {
+      entity.boundingVolume = new THREE.Box3().setFromObject(mesh);
+    } else {
+      const radius = entity.type === 'sphere' ? entity.size.radius! : Math.max(entity.size.radius!, entity.size.height! / 2);
+      entity.boundingVolume = new THREE.Sphere(mesh.position, radius);
+    }
+
     this.entities.push(entity);
     this.scene.add(mesh);
     this.interactionManager.add(entity);

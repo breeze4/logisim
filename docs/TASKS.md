@@ -78,28 +78,56 @@ This document tracks the implementation tasks for the Logistics Simulation proje
 - [x] **Task 14: Implement Movement Queue System**
   - Allow multiple entities to have movement commands queued and executed simultaneously.
 
-## Upcoming Tasks: Collision Mechanics
+### Collision Mechanics
 
-- [ ] **Task 1: Update Entity Class**
+- [x] **Task 1: Update Entity Class**
   - Add a `mass` property (defaulting to 1).
   - Add a `boundingVolume` property (to hold a `THREE.Box3` or `THREE.Sphere`).
-- [ ] **Task 2: Generate Bounding Volumes**
+- [x] **Task 2: Generate Bounding Volumes**
   - In `EntityManager`, when creating an entity, compute its bounding volume and assign it.
   - Ensure the bounding volume is updated whenever an entity moves.
-- [ ] **Task 3: Create CollisionManager Class**
+- [x] **Task 3: Create CollisionManager Class**
   - Create a new `CollisionManager.ts` file.
   - The class will hold the logic for collision detection and response.
-- [ ] **Task 4: Implement Collision Detection**
+- [x] **Task 4: Implement Collision Detection**
   - In `CollisionManager`, create a method to check for intersections between all entity bounding volumes.
   - It should handle Box-Box, Sphere-Sphere, and Box-Sphere collision checks.
-- [ ] **Task 5: Implement Collision Response**
+- [x] **Task 5: Implement Collision Response**
   - In `CollisionManager`, create a method that takes two colliding entities and calculates their new velocities based on an elastic collision formula.
-- [ ] **Task 6: Refactor the Main Loop (`main.ts`)**
+- [x] **Task 6: Refactor the Main Loop (`main.ts`)**
   - Instantiate the `CollisionManager`.
   - Change the `animate` loop order:
     1. Calculate intended velocity for each entity.
     2. Run collision detection and response, which may alter velocities.
     3. Update entity positions based on the final, adjusted velocities.
-- [ ] **Task 7: Refactor Entity `update` Method**
+- [x] **Task 7: Refactor Entity `update` Method**
   - Separate the concerns of "intent" (moving towards a target) and "execution" (updating position based on final velocity).
   - The collision response will modify the final velocity, but the entity's intent to reach its target should remain. 
+
+## Upcoming Tasks: Pathfinding and Obstacle Avoidance
+
+- [ ] **Task 1: Create Grid System**
+  - Create a `Grid.ts` file for a class that represents the world as a grid.
+  - Implement logic to mark cells as walkable or unwalkable based on entity positions.
+- [ ] **Task 2: Implement A* Algorithm**
+  - Create an `AStar.ts` file.
+  - Implement the A* pathfinding algorithm to find a path of nodes on the grid.
+- [ ] **Task 3: Implement Path Smoothing**
+  - Add a utility function to smooth the A* path into a series of waypoints.
+- [ ] **Task 4: Create Steering Behaviors**
+  - Create a `Steering.ts` file.
+  - Implement `seek`, `separation`, and `obstacleAvoidance` behaviors.
+- [ ] **Task 5: Refactor Entity Class for Pathfinding**
+  - Add a `path` property to store the calculated waypoints.
+  - Add a `steering` property to manage the entity's steering behaviors.
+  - Refactor the `update` method to follow the path and apply steering forces.
+- [ ] **Task 6: Create PathfindingManager Class**
+  - Create a `PathfindingManager.ts` to manage path requests from entities.
+  - This will prevent multiple entities from running A* at the same time.
+- [ ] **Task 7: Refactor Main Loop (`main.ts`)**
+  - Instantiate the `PathfindingManager`.
+  - In `onPlaneClick`, instead of setting `isMoving`, create a path request for the selected entity.
+  - The `animate` loop will now primarily call the entity's `update` method, which will handle all movement logic.
+- [ ] **Task 8: Refactor Collision System**
+  - The current collision system is physics-based (bouncing). This will be replaced by the local avoidance steering behavior.
+  - The `CollisionManager` will be removed or repurposed to simply provide obstacle information to the grid. 
