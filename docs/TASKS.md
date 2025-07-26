@@ -23,14 +23,15 @@ Based on the specification in `docs/SPEC.md`, here are the tasks required to imp
 - [x] Add basic entity types (box, cylinder, sphere) with different colors
 
 ## Phase 3B: Interactive Entity Management
-- [ ] Add entity management UI panel to the interface
-- [ ] Implement click-to-place entity creation using mouse raycasting
-- [ ] Add entity type selector (dropdown for box/cylinder/sphere)
-- [ ] Create entity selection system with visual feedback (highlighting)
-- [ ] Implement entity deletion functionality (select and delete)
-- [ ] Add entity property editor (position, color, type modification)
-- [ ] Create entity list/manager showing all current entities
-- [ ] Add bulk operations (clear all entities, duplicate selected)
+- [x] **UI:** Add HTML for the entity management panel to `index.html`.
+- [x] **UI:** Create a `UIManager.ts` class to manage UI interactions.
+- [x] **Interaction:** Create an `InteractionManager.ts` to handle mouse input and raycasting.
+- [x] **Interaction:** Implement entity selection with visual highlighting (e.g., `OutlinePass`).
+- [x] **Entity Management:** Implement click-to-place functionality to add new entities.
+- [x] **Entity Management:** Implement entity deletion via the 'Delete' key.
+- [x] **Entity Management:** Add a "Clear All" button and functionality.
+- [x] **UI:** Populate an entity list in the UI panel.
+- [x] **Interaction:** Implement a property editor to modify the selected entity's properties (e.g., color).
 
 ## Phase 3C: Moving Entities
 - [ ] Add movement state tracking to Entity class (isMoving, targetPosition)

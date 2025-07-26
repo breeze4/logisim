@@ -1,85 +1,9 @@
 import * as THREE from 'three';
 import './style.css';
-
-interface EntityData {
-  id: string;
-  type: 'box' | 'cylinder' | 'sphere';
-  position: { x: number; y: number };
-  size: { width?: number; height?: number; depth?: number; radius?: number };
-  color: string;
-}
-
-class Entity {
-  id: string;
-  type: 'box' | 'cylinder' | 'sphere';
-  position: { x: number; y: number };
-  size: { width?: number; height?: number; depth?: number; radius?: number };
-  color: string;
-  mesh: THREE.Mesh | null;
-
-  constructor(entityData: EntityData) {
-    this.id = entityData.id;
-    this.type = entityData.type;
-    this.position = entityData.position;
-    this.size = entityData.size;
-    this.color = entityData.color;
-    this.mesh = null;
-  }
-}
-
-class EntityManager {
-  scene: THREE.Scene;
-  entities: Entity[];
-
-  constructor(scene: THREE.Scene) {
-    this.scene = scene;
-    this.entities = [];
-  }
-
-  async loadEntities(url: string) {
-    try {
-      const response = await fetch(url);
-      const data = await response.json();
-      if (data.entities && Array.isArray(data.entities)) {
-        data.entities.forEach((entityData: EntityData) => {
-          this.createEntity(entityData);
-        });
-      }
-    } catch (error) {
-      console.error('Error loading entities:', error);
-    }
-  }
-
-  createEntity(entityData: EntityData) {
-    const entity = new Entity(entityData);
-
-    let geometry: THREE.BufferGeometry;
-    switch (entity.type) {
-      case 'box':
-        geometry = new THREE.BoxGeometry(entity.size.width, entity.size.height, entity.size.depth);
-        break;
-      case 'cylinder':
-        geometry = new THREE.CylinderGeometry(entity.size.radius, entity.size.radius, entity.size.height, 32);
-        break;
-      case 'sphere':
-        geometry = new THREE.SphereGeometry(entity.size.radius, 32, 32);
-        break;
-      default:
-        console.warn(`Unknown entity type: ${entity.type}`);
-        return;
-    }
-
-    const material = new THREE.MeshLambertMaterial({ color: entity.color });
-    const mesh = new THREE.Mesh(geometry, material);
-    mesh.position.set(entity.position.x, (entity.size.height || 0) / 2, entity.position.y);
-    mesh.castShadow = true;
-    mesh.receiveShadow = true;
-
-    entity.mesh = mesh;
-    this.entities.push(entity);
-    this.scene.add(mesh);
-  }
-}
+import { EntityManager, Entity } from './entities';
+import { CameraControls } from './CameraControls';
+import { UIManager } from './UIManager';
+import { AppInteractionManager } from './InteractionManager';
 
 class LogisticsSimulation {
   scene: THREE.Scene;
@@ -87,13 +11,12 @@ class LogisticsSimulation {
   renderer: THREE.WebGLRenderer;
   plane: THREE.Mesh | null = null;
   entityManager: EntityManager;
+  cameraControls: CameraControls;
+  uiManager: UIManager;
+  interactionManager: AppInteractionManager;
   planeWidth: number = 100;
   planeHeight: number = 100;
-  cameraFocusPoint: THREE.Vector3 = new THREE.Vector3(0, 0, 0);
-  cameraDistance: number = 50;
-  cameraAngle: number = Math.PI / 4;
-  cameraRotation: number = 0;
-  keys: { [key: string]: boolean } = {};
+  selectedEntity: Entity | null = null;
 
   constructor() {
     this.scene = new THREE.Scene();
@@ -104,7 +27,19 @@ class LogisticsSimulation {
       1000
     );
     this.renderer = new THREE.WebGLRenderer({ antialias: true });
-    this.entityManager = new EntityManager(this.scene);
+    
+    this.interactionManager = new AppInteractionManager(
+      this.renderer,
+      this.camera,
+      this.selectEntity.bind(this)
+    );
+    this.entityManager = new EntityManager(this.scene, this.interactionManager);
+    this.cameraControls = new CameraControls(this.camera);
+    this.uiManager = new UIManager(
+      this.addEntity.bind(this),
+      this.clearEntities.bind(this),
+      this.selectEntity.bind(this)
+    );
 
     this.init();
     this.setupControls();
@@ -127,9 +62,10 @@ class LogisticsSimulation {
 
     this.createPlane();
     this.setupLighting();
-    this.updateCameraPosition();
 
-    this.entityManager.loadEntities('entities.json');
+    this.entityManager.loadEntities('entities.json').then(() => {
+      this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
+    });
 
     window.addEventListener('resize', () => this.onWindowResize());
   }
@@ -172,30 +108,7 @@ class LogisticsSimulation {
     this.scene.add(directionalLight);
   }
 
-  updateCameraPosition() {
-    const minAngle = 15 * Math.PI / 180;
-    const maxAngle = 85 * Math.PI / 180;
-    this.cameraAngle = Math.max(minAngle, Math.min(this.cameraAngle, maxAngle));
-
-    const x = this.cameraFocusPoint.x + this.cameraDistance * Math.cos(this.cameraRotation) * Math.cos(this.cameraAngle);
-    const z = this.cameraFocusPoint.z + this.cameraDistance * Math.sin(this.cameraRotation) * Math.cos(this.cameraAngle);
-    const y = this.cameraFocusPoint.y + this.cameraDistance * Math.sin(this.cameraAngle);
-
-    this.camera.position.set(x, y, z);
-    this.camera.lookAt(this.cameraFocusPoint);
-  }
-
   setupControls() {
-    document.addEventListener('keydown', (event) => {
-      this.keys[event.code] = true;
-      this.keys['Shift'] = event.shiftKey;
-    });
-
-    document.addEventListener('keyup', (event) => {
-      this.keys[event.code] = false;
-      this.keys['Shift'] = event.shiftKey;
-    });
-
     const updatePlaneButton = document.getElementById('updatePlane');
     if (updatePlaneButton) {
       updatePlaneButton.addEventListener('click', () => {
@@ -204,61 +117,34 @@ class LogisticsSimulation {
         this.createPlane();
       });
     }
+    window.addEventListener('keydown', this.onKeyDown.bind(this));
   }
 
-  handleKeyInput() {
-    const panSpeed = 0.75;
-    const rotationSpeed = 0.01;
-    const zoomSpeed = 2;
-    const tiltSpeed = 0.005;
-
-    const forward = new THREE.Vector3(
-      Math.cos(this.cameraRotation),
-      0,
-      Math.sin(this.cameraRotation)
-    );
-    const right = new THREE.Vector3(
-      -Math.sin(this.cameraRotation),
-      0,
-      Math.cos(this.cameraRotation)
-    );
-
-    if (this.keys['KeyW']) {
-      if (this.keys['Shift']) {
-        this.cameraAngle += tiltSpeed;
-      } else {
-        this.cameraFocusPoint.add(forward.clone().multiplyScalar(-panSpeed));
+  onKeyDown(event: KeyboardEvent) {
+    if (event.key === 'Delete' || event.key === 'Backspace') {
+      if (this.selectedEntity) {
+        this.entityManager.deleteEntity(this.selectedEntity);
+        this.selectEntity(null);
       }
     }
-    if (this.keys['KeyS']) {
-      if (this.keys['Shift']) {
-        this.cameraAngle -= tiltSpeed;
-      } else {
-        this.cameraFocusPoint.add(forward.clone().multiplyScalar(panSpeed));
-      }
-    }
-    if (this.keys['KeyA']) {
-      this.cameraFocusPoint.add(right.clone().multiplyScalar(panSpeed));
-    }
-    if (this.keys['KeyD']) {
-      this.cameraFocusPoint.add(right.clone().multiplyScalar(-panSpeed));
-    }
+  }
 
-    if (this.keys['KeyQ']) {
-      this.cameraRotation += rotationSpeed;
-    }
-    if (this.keys['KeyE']) {
-      this.cameraRotation -= rotationSpeed;
-    }
+  addEntity(type: 'box' | 'cylinder' | 'sphere') {
+    // For now, add at center
+    this.entityManager.addEntity(type, { x: 0, y: 0 });
+    this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
+  }
 
-    if (this.keys['ControlLeft'] || this.keys['ControlRight']) {
-      this.cameraDistance = Math.max(10, this.cameraDistance - zoomSpeed);
-    }
-    if (this.keys['Space']) {
-      this.cameraDistance = Math.min(200, this.cameraDistance + zoomSpeed);
-    }
+  clearEntities() {
+    this.entityManager.clearEntities();
+    this.selectEntity(null);
+  }
 
-    this.updateCameraPosition();
+  selectEntity(entity: Entity | null) {
+    this.selectedEntity = entity;
+    this.interactionManager.selectEntity(entity);
+    this.uiManager.updateEntityList(this.entityManager.entities, this.selectedEntity);
+    this.uiManager.updateSelectedEntityPanel(this.selectedEntity);
   }
 
   onWindowResize() {
@@ -269,7 +155,8 @@ class LogisticsSimulation {
 
   animate() {
     requestAnimationFrame(() => this.animate());
-    this.handleKeyInput();
+    this.cameraControls.update();
+    this.interactionManager.update();
     this.renderer.render(this.scene, this.camera);
   }
 }

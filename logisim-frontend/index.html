@@ -19,6 +19,27 @@
       </div>
       <button id="updatePlane">Update Plane</button>
     </div>
+    <div id="entity-panel">
+      <h3>Entity Management</h3>
+      <div id="entity-list"></div>
+      <hr>
+      <h4>Create Entity</h4>
+      <label>Type:
+        <select id="entity-type">
+          <option value="box">Box</option>
+          <option value="cylinder">Cylinder</option>
+          <option value="sphere">Sphere</option>
+        </select>
+      </label>
+      <button id="add-entity">Add Entity</button>
+      <hr>
+      <h4>Selected Entity</h4>
+      <div id="selected-entity-panel">
+        <p>No entity selected</p>
+      </div>
+      <hr>
+      <button id="clear-entities">Clear All Entities</button>
+    </div>
     <div id="canvas-container"></div>
     <script type="module" src="/src/main.ts"></script>
   </body>
