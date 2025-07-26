@@ -1,118 +1,86 @@
-# Logistics Sim Spec
+# Logistics Simulation Specification
 
-## Base game:
-* 3D camera with a plane below
-* Camera controls:
-    * WASD to pan, Q and E to rotate around a point (meaning the camera moves in a wide circle, while remaining focused on a specific point in the middle to rotate around)
-    * Shift-W and Shift-S to tilt camera up/down (changes viewing angle)
-    * Ctrl and Space keys to zoom in, zoom out (respectively)
-* There should be a plane that the game will exist in (an X-Y plane)
-* The camera should never go below 15 degrees above the plane (meaning it cant clip down through the world plane)
-* The plane should support any number of entities - fixed or moving, and should be configurable with a height/width in the X-Y axis
+## 1. Overview
+This document outlines the specifications for a 3D logistics simulation application. The core of the application is a web-based interface displaying a 3D world with a configurable plane, a flexible camera system, and support for various types of entities.
 
-## Current Camera Control System (Implemented)
+## 2. World Plane
+- The simulation will take place on a configurable X-Y plane.
+- The plane's dimensions (height and width) will be adjustable.
+- It must support an unlimited number of fixed or moving entities.
 
-### Camera Architecture
-- Camera maintains focal point, calculated in spherical coordinates
-- Distance and rotation tracked separately from focal point
+## 3. Camera System
 
-### Controls
-- **WASD**: Pan relative to camera orientation (not world coordinates)
-- **Q/E**: Rotate around focal point, smooth continuous movement
-- **Shift-W/S**: Tilt camera up/down (changes viewing angle)
-- **Ctrl/Space**: Zoom in/out (10-200 unit range)
-- **15° constraint**: Camera never goes below plane
+### 3.1. Core Requirements
+- The camera must be a 3D perspective camera positioned above the X-Y plane.
+- It should maintain focus on a central point when rotating.
+- The camera's viewing angle must not go below 15 degrees relative to the plane, preventing it from clipping through the ground.
 
-### Technical
-- Three.js PerspectiveCamera with continuous key state tracking
-- All movements maintain focal point as center of operations
+### 3.2. Controls
+- **Panning:** Use **WASD** keys for camera movement, relative to the camera's current orientation.
+- **Rotation:** Use **Q** and **E** keys to rotate the camera in a wide circle around its focal point.
+- **Tilting:** Use **Shift-W** and **Shift-S** to tilt the camera angle up and down.
+- **Zoom:** Use **Ctrl** and **Space** keys to zoom in and out, respectively (within a 10-200 unit range).
 
-## Detailed Requirements
+### 3.3. Technical Implementation
+- The system is implemented using a `Three.js PerspectiveCamera`.
+- Camera state (focal point, distance, rotation) is tracked in spherical coordinates.
+- A continuous key state tracking mechanism ensures smooth and responsive movements.
 
-### 3D Camera System
-- Camera must be positioned above an X-Y plane
-- Camera angle must never go below 15 degrees above the plane
-- Camera should maintain focus on a specific point when rotating
+## 4. Entity Management
 
-### Camera Controls
-- **WASD**: Pan camera movement
-- **Q/E**: Rotate camera around focal point (wide circle movement)
-- **Ctrl/Space**: Zoom in/out respectively
+### 4.1. Static Entities (JSON-Based)
+- Entities can be loaded from a JSON configuration file on application start.
+- Supported entity types include: `box`, `cylinder`, and `sphere`.
+- **Properties:** Each entity has an `id`, `type`, `position` (x, y on the plane), `size`, and `color`.
+- **JSON Structure:**
+  ```json
+  {
+    "entities": [
+      {
+        "id": "entity1",
+        "type": "box",
+        "position": {"x": 10, "y": 15},
+        "size": {"width": 2, "height": 2, "depth": 2},
+        "color": "#ff0000"
+      }
+    ]
+  }
+  ```
 
-### World Plane
-- X-Y axis plane serving as the game world
-- Configurable height and width dimensions
-- Support for unlimited entities (fixed or moving)
+### 4.2. Interactive Entity Management
+- **Creation:** Users can click on the plane to place new entities. This is handled via mouse raycasting.
+- **Selection:** Entities can be selected, which provides visual feedback (e.g., highlighting or an outline).
+- **Modification:** Selected entities' properties (like position, color, type) can be edited through a UI panel.
+- **Deletion:** Entities can be deleted by selecting them and pressing the 'Delete' key or using a UI button.
+- **Persistence:** Entity state is not persistent and resets on page reload.
 
-### Phase 3A: Static Entities (JSON-Based)
+### 4.3. Moving Entities
 
-#### Requirements
-- Load entities from JSON configuration file on application start
-- Support basic entity types: box, cylinder, sphere
-- Entity properties: position (x, y), type, size, color
-- Entities positioned on X-Y plane (y=0 world position)
-- No user interaction required - purely display pre-configured entities
+#### 4.3.1. Core Properties
+- **Position**: A 3D vector (`x`, `y`, `z`) representing the entity's location.
+- **Velocity**: A 3D vector (`vx`, `vy`, `vz`) representing speed and direction.
+- **Acceleration**: A 3D vector (`ax`, `ay`, `az`) representing the rate of change of velocity.
+- **Orientation**: The entity's rotation should align with its direction of movement.
 
-#### JSON Structure
-```json
-{
-  "entities": [
-    {
-      "id": "entity1",
-      "type": "box",
-      "position": {"x": 10, "y": 15},
-      "size": {"width": 2, "height": 2, "depth": 2},
-      "color": "#ff0000"
-    }
-  ]
-}
-```
+#### 4.3.2. Movement Mechanics
+- **Time-based Updates**: Entity movement is based on a discrete time step (`deltaTime`) to ensure consistent speed across different frame rates.
+  - `new_velocity = current_velocity + acceleration * deltaTime`
+  - `new_position = current_position + velocity * deltaTime`
+- **Movement Control**: The simulation will use a three-click system for directing entities:
+  1. **Click 1**: Select the entity to move.
+  2. **Click 2**: Select the target destination on the plane.
+  3. **Click 3**: Confirm the movement, initiating the animation.
+- **Visual Feedback**: The system will provide visual aids, such as a preview line to the target, a marker at the destination, and highlighting for the selected entity.
+- **Animation**: Movement between the start and target positions will be a smooth, interpolated animation.
+- **Validation**: The target position must be within the boundaries of the world plane.
+- **Cancellation**: The movement command can be canceled by right-clicking or pressing the `Escape` key.
+- **Movement Queue**: The system should support queueing movement commands for multiple entities.
 
-#### Entity Class Design
-- Entity properties: id, type, position, size, color, mesh (Three.js object)
-- EntityManager: loadFromJSON(), createEntity(), renderEntity()
-- Support for box, cylinder, sphere geometries with materials
-
-### Phase 3B: Interactive Entity Management
-
-#### Requirements
-- Click-to-place entity creation using mouse raycasting on plane
-- Entity selection with visual feedback (highlighting, outline)
-- Entity property editing (position, color, type changes)
-- Entity deletion (select and delete key or button)
-- UI panel with entity controls and type selector
-
-#### User Interface
-- Entity management panel (collapsible sidebar or overlay)
-- Entity type selector (dropdown: box, cylinder, sphere)
-- Color picker for entity customization
-- Entity list showing all current entities with names/IDs
-- Delete button and clear all functionality
-
-#### Interaction System
-- Mouse raycasting to detect plane intersection for placement
-- Entity selection on click with visual highlighting
-- Property editor updates selected entity in real-time
-- Non-persistent (entities reset on page reload)
-
-### Phase 3C: Moving Entities
-
-#### Requirements
-- Three-click movement system: select entity → target position → confirm
-- Visual movement preview showing target location
-- Smooth animation between current and target positions
-- Movement validation (target must be within plane boundaries)
-- Movement cancellation (right-click or escape)
-
-#### Movement Workflow
-1. **Click 1**: Select entity (highlight selected entity)
-2. **Click 2**: Select target position (show preview line/marker)
-3. **Click 3**: Confirm movement (animate entity to target)
-- Right-click or ESC cancels movement at any stage
-
-#### Movement System
-- Movement state tracking: idle, selecting_target, confirming_move
-- Visual feedback: selection highlight, target marker, movement line
-- Smooth interpolation animation (configurable duration)
-- Multiple entities can be queued for movement
-- Movement queue system with visual indicators
+## 5. User Interface
+- A dedicated, collapsible UI panel will house entity management controls.
+- **Controls Include:**
+  - An entity type selector (dropdown for `box`, `cylinder`, `sphere`).
+  - A color picker for customizing entity appearance.
+  - A list displaying all current entities with their names or IDs.
+  - Buttons for deleting entities and clearing all entities from the scene.
+- Constants for velocity and acceleration should be editable in a controls section of the UI.
